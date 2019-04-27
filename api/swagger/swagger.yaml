@@ -11,6 +11,11 @@ schemes:
   # tip: remove http to make production-grade
   - http
   - https
+securityDefinitions:
+  Bearer:
+    type: apiKey
+    name: Authorization
+    in: header
 # format of bodies a client can send (Content-Type)
 consumes:
   - application/json
@@ -128,6 +133,59 @@ paths:
           description: Error
           schema:
             $ref: "#/definitions/ErrorResponse"
+  /login/{role}:
+    x-swagger-router-controller: main-controller
+    post:
+      operationId: loginPost
+      description: "Login with a particular role"
+      parameters:
+        - name: role
+          in: path
+          required: true
+          type: string
+        - name: authentication
+          in: body
+          required: true
+          schema:
+            $ref: "#/definitions/Authentication"
+      responses:
+        "200":
+          description: "Success"
+          schema:
+            $ref: "#/definitions/Token"
+        "403":
+          description: "Access Denied"
+          schema:
+            $ref: "#/definitions/Error"
+  /unprotected:
+    x-swagger-router-controller: main-controller
+    get:
+      operationId: unprotectedGet
+      description: "Unprotected endpoint"
+      responses:
+        "200":
+          description: "Success"
+          schema:
+            $ref: "#/definitions/Resource"
+  /protected: 
+    x-swagger-router-controller: main-controller
+    get:
+      operationId: protectedGet
+      description: "Protected endpoint, only accessible to 'admins' and 'users'"
+      security:
+        - Bearer: []
+      x-security-scopes:
+        - admin
+        - user
+      responses:
+        "200":
+          description: "Success"
+          schema:
+            $ref: "#/definitions/Resource"
+        "403":
+          description: "Access Denied"
+          schema:
+            $ref: "#/definitions/Error"
   /swagger:
     x-swagger-pipe: swagger_raw
 # complex objects have schema definitions
@@ -169,6 +227,30 @@ definitions:
   ErrorResponse:
     required:
       - message
+    properties:
+      message:
+        type: string
+  Authentication:
+    type: object
+    properties:
+      username:
+        type: string
+        example: "username"
+      password:
+        type: string
+        example: "password"
+  Resource:
+    type: object
+    properties:
+      resource:
+        type: string
+  Token:
+    type: object
+    properties:
+      token:
+        type: string
+  Error:
+    type: object
     properties:
       message:
         type: string
